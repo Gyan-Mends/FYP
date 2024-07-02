@@ -7,16 +7,52 @@ import Ticket from "~/modal/tickets";
 import { getSession } from "~/session";
 class TicketController {
 
+    async CreateTickets({ request, subject, category, priority, description, attachment, user, location }: { request: Request, subject: string, category: string, priority: string, description: string, attachment: string, user: string, location: string }) {
+        try {
+            const session = await getSession(request.headers.get("Cookie"));
+            const token = session.get("email");
+    
+            const tickets = new Ticket({
+                subject,
+                category,
+                priority,
+                description,
+                attachment,
+                user,
+                location,
+            });
+    
+            const ticketResponse = await tickets.save();
+    
+            if (ticketResponse) {
+                return json({ message: "Ticket Created Successfully", success: true }, { status: 200 });
+            } else {
+                return json({ message: "Unable to create ticket", success: false }, { status: 400 });
+            }
+        } catch (error: any) {
+            console.error("Error creating ticket:", error);
+            return json({ message: error.message, success: false }, { status: 500 });
+        }
+    }
+    
+
     async AddTickets({ request, subject, category, priority, description, attachment, user, location, id, intent,admin,stuff,status }: { request: Request, subject: string, category: string, priority: string, description: string, attachment: string, user: string, location: string, id: string, intent: string,admin:string,stuff:string,status:string }) {
         try {
             const session = await getSession(request.headers.get("Cookie"));
             const token = session.get("email");
 
-            if (intent == 'toggleStatus') {
-                return await Ticket.findByIdAndUpdate(id, {
-                    status,
+            if (intent === "complete") {
+                console.log(id);
+                
+                const updateResponse = await Ticket.findByIdAndUpdate(id, {
+                    status
+                })
+
+                if (updateResponse) {
+                    return json({ message: "Ticket completed successfully", success: true }, { status: 200 })
+                } else {
+                    return json({ message: "Unable to complete ticket", success: false }, { status: 400 })
                 }
-                )
             }
 
             if (intent === "update") {

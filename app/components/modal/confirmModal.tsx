@@ -6,8 +6,9 @@ interface DeleteModalProps{
     isOpen: boolean,
     onOpenChange: () => void,
     children:ReactNode
+    modalbody:ReactNode
 }
-export default function ConfirmModal({isOpen,onOpenChange,children}: DeleteModalProps) {
+export default function ConfirmModal({isOpen,onOpenChange,children,modalbody}: DeleteModalProps) {
 
   return (
     <>
@@ -17,7 +18,7 @@ export default function ConfirmModal({isOpen,onOpenChange,children}: DeleteModal
             <>
               <ModalHeader className="flex items-center justify-center gap-1 font-poppins text-2xl text-danger">Confirm Delete</ModalHeader>
               <ModalBody className="flex items-center justify-center">
-                <p className="font-poppins">Are you sure to delete this information?</p>
+                <p className="font-poppins">{modalbody}</p>
               </ModalBody>
               <ModalFooter className="flex items-center justify-center">
                 {children}

@@ -24,7 +24,7 @@ const Ticket = () => {
     const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
     const [base64Image, setBase64Image] = useState();
     const actionData = useActionData<any>()
-    const [rowsPerPage, setRowsPerPage] = useState(11)
+    const [rowsPerPage, setRowsPerPage] = useState(8)
     const [isConfirmModalOpened, setIsConfirmModalOpened] = useState(false)
     const [selectedTicket, setSelectedTicket] = useState<TicketInterface>()
     const [isEditModalOpened, setIsEditModalOpened] = useState(false)
@@ -47,6 +47,7 @@ const Ticket = () => {
             }
         }
     }, [actionData])
+
     const priorities = [
         { name: "Low" },
         { name: "Medium" },
@@ -102,7 +103,7 @@ const Ticket = () => {
                         <TableCell>{ticket.location}</TableCell>
                         <TableCell>{ticket.priority}</TableCell>
                         <TableCell>{ticket.description}</TableCell>
-                        <TableCell>{ticket.status === "Pending" ? "No Staff Assigned" : ticket.stuff?.name}</TableCell>
+                        <TableCell>{ticket.status === "Pending" ? "No Staff Assigned" : ticket?.stuff?.name}</TableCell>
                         <TableCell><Button color="success" variant="flat">{ticket.status}</Button></TableCell>
                         <TableCell className=" flex items-center  gap-4">
                             <button className="text-dander font-poppins text-primary-400 cursor-pointer active:opacity-50 " onClick={() => {
@@ -133,13 +134,8 @@ const Ticket = () => {
                                 Delete
                             </button>
                             <button className="text-success-400 font-poppins text-danger cursor-pointer active:opacity-50" onClick={() => {
-                                submit({
-                                    id: ticket._id,
-                                    intent: 'toggleStatus',
-                                    status: ticket.status == 'Opened' ? 'Closed' : 'Opened'
-                                }, {
-                                    method: 'post',
-                                })
+                                setIsConfirmModalOpened(true)
+                                setSelectedTicket(ticket)
                             }}>
                                 Complete
                             </button>
@@ -147,6 +143,7 @@ const Ticket = () => {
                     </TableRow>
                 ))}
             </CustomTable>
+            
             <ViewModal isOpen={isViewModalOpened} className="w-80" modalTitle="Ticket Creater Details" onOpenChange={handleViewModalClosed}>
                 <div>
                     <img className="rounded-lg" src={selectedTicket?.stuff?.image} alt="" />
@@ -283,7 +280,7 @@ const Ticket = () => {
                 )}
             </CreateModal>
 
-            <ConfirmModal isOpen={isConfirmModalOpened} onOpenChange={handleConfirModalClosed}>
+            <ConfirmModal modalbody="Are you sure to complete this ticket?" isOpen={isConfirmModalOpened} onOpenChange={handleConfirModalClosed}>
                 <div className="flex gap-4">
                     <Button color="danger" className="font-poppins text-md" onPress={handleConfirModalClosed}>
                         No
@@ -291,11 +288,11 @@ const Ticket = () => {
                     <Button color="primary" className="font-poppins text-md" onClick={() => {
                         if (selectedTicket) {
                             submit({
-                                intent: "delete",
-                                id: selectedTicket?._id
-
+                                id: selectedTicket._id,
+                                intent: 'complete',
+                                status:  'Completed' 
                             }, {
-                                method: "post"
+                                method: 'post',
                             })
                         }
                         setIsConfirmModalOpened(false)
@@ -439,10 +436,12 @@ export const action: ActionFunction = async ({ request }) => {
     const location = formData.get("location") as string
     const id = formData.get("id") as string
     const intent = formData.get("intent") as string
+    const status = formData.get('status') as string;
 
 
-    const tickets = await ticketController.AddTickets({ request, subject, category, priority, description, attachment, user, location, id, intent })
-    return tickets
+
+    const tickets =  ticketController.CreaateTickets({ request, subject, category, priority, description, attachment, user, location })
+    return {tickets}
 
 }
 

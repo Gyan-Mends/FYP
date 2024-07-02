@@ -122,7 +122,7 @@ const Ticket = () => {
 
 
 
-            <ConfirmModal isOpen={isConfirmModalOpened} onOpenChange={handleConfirModalClosed}>
+            <ConfirmModal modalbody="Are you sure to delete this information" isOpen={isConfirmModalOpened} onOpenChange={handleConfirModalClosed}>
                 <div className="flex gap-4">
                     <Button color="danger" className="font-poppins text-md" onPress={handleConfirModalClosed}>
                         No
