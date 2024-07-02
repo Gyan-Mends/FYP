@@ -87,7 +87,7 @@ const Ticket = () => {
                         <TableCell>{ticket.location}</TableCell>
                         <TableCell>{ticket.priority}</TableCell>
                         <TableCell>{ticket.description}</TableCell>
-                        <TableCell>{ticket.stuff.name}</TableCell>
+                        <TableCell>{ticket?.stuff?.name}</TableCell>
                         <TableCell><Button color="success" variant="flat">{ticket.status}</Button></TableCell>
                         <TableCell className="relative flex items-center gap-4">
                             <span className="text-lg text-primary-400 cursor-pointer active:opacity-50">
