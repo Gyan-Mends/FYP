@@ -3,8 +3,11 @@ import { ActionFunction, LoaderFunction } from "@remix-run/node"
 import { Form, Link, useActionData, useLoaderData, useSubmit } from "@remix-run/react"
 import { useEffect, useState } from "react"
 import { Toaster } from "react-hot-toast"
+import { LocationIcon } from "~/components/icons/LocationIcon"
+import { MailIcon } from "~/components/icons/MailIcon"
 import PlusIcon from "~/components/icons/PlusIcon"
 import { SearchIcon } from "~/components/icons/SearchIcon"
+import UserIcon from "~/components/icons/UserIcon"
 import EditModal from "~/components/modal/EditModal"
 import ConfirmModal from "~/components/modal/confirmModal"
 import CreateModal from "~/components/modal/createModal"
@@ -88,7 +91,7 @@ const Ticket = () => {
                         <TableCell>{ticket.location}</TableCell>
                         <TableCell>{ticket.priority}</TableCell>
                         <TableCell>{ticket.description}</TableCell>
-                        <TableCell>{ticket.stuff.name}</TableCell>
+                        <TableCell>{ticket.stuff.name === "Pending" ? "Staff not assigned" : ticket.stuff.name}</TableCell>
                         <TableCell><Button color="success" variant="flat">{ticket.status}</Button></TableCell>
                         <TableCell className="relative flex items-center gap-4">
                             <span className="text-lg text-primary-400 cursor-pointer active:opacity-50">
@@ -104,14 +107,24 @@ const Ticket = () => {
                     </TableRow>
                 ))}
             </CustomTable>
-            <ViewModal isOpen={isViewModalOpened} className="" modalTitle="Ticket Creater Details" onOpenChange={handleViewModalClosed}>
-                <div className="">
-                    <div>
-
+            <ViewModal isOpen={isViewModalOpened} className="w-80" modalTitle="Ticket Creater Details" onOpenChange={handleViewModalClosed}>
+                <div>
+                    <img className="rounded-lg" src={selectedTicket?.user.image} alt="" />
+                    <div className="mt-4 flex items-center gap-4">
+                        <UserIcon className="h-6 w-6"/>
+                        <p className="font-poppins text-sm">{selectedTicket?.user.name}</p>
                     </div>
-                    
+                    <div className="mt-2 flex items-center gap-4">
+                        <MailIcon className="h-6 w-6 text-default-400"/>
+                        <p className="font-poppins text-sm">{selectedTicket?.user.email}</p>
+                    </div>
+                    <div className="mt-2 flex items-center gap-4">
+                        <LocationIcon  className="h-6 w-6 text-primary"/>
+                        <p className="font-poppins text-sm">{selectedTicket?.location}</p>
+                    </div>
                 </div>
-                <div className="flex justify-end gap-2 mt-10 font-poppins">
+
+                <div className="flex justify-end gap-2 mt-4 font-poppins">
                     <Button color="danger" variant="flat" onPress={handleViewModalClosed}>
                         Close
                     </Button>

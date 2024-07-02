@@ -11,6 +11,14 @@ class TicketController {
         try {
             const session = await getSession(request.headers.get("Cookie"));
             const token = session.get("email");
+
+            if (intent == 'toggleStatus') {
+                return await Ticket.findByIdAndUpdate(id, {
+                    status,
+                }
+                )
+            }
+
             if (intent === "update") {
                 const updateResponse = await Ticket.findByIdAndUpdate(id, {
                     subject,
@@ -77,11 +85,11 @@ class TicketController {
             return redirect("/login")
         }
         //user side tickets fetch
-        const tickets = await Ticket.find({ user: user?._id })
+        const tickets = await Ticket.find({ user: user?._id }).populate("stuff")
         //admin side ticket fetch
-        const adminTickets = await Ticket.find().populate("stuff");
+        const adminTickets = await Ticket.find().populate("stuff").populate("user");
         //staff side ticket fetch
-        const staffTickets =  await Ticket.find({stuff:staffId?._id}).populate("stuff");
+        const staffTickets =  await Ticket.find({stuff:staffId?._id}).populate("user").populate("stuff");
         
         
 

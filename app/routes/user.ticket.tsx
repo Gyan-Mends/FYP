@@ -3,11 +3,15 @@ import { ActionFunction, LoaderFunction } from "@remix-run/node"
 import { Form, useActionData, useLoaderData, useSubmit } from "@remix-run/react"
 import { useEffect, useState } from "react"
 import { Toaster } from "react-hot-toast"
+import { LocationIcon } from "~/components/icons/LocationIcon"
+import { MailIcon } from "~/components/icons/MailIcon"
 import PlusIcon from "~/components/icons/PlusIcon"
 import { SearchIcon } from "~/components/icons/SearchIcon"
+import UserIcon from "~/components/icons/UserIcon"
 import EditModal from "~/components/modal/EditModal"
 import ConfirmModal from "~/components/modal/confirmModal"
 import CreateModal from "~/components/modal/createModal"
+import ViewModal from "~/components/modal/viewModal"
 import { TicketColumns } from "~/components/table/columns"
 import CustomTable from "~/components/table/table"
 import { errorToast, successToast } from "~/components/toast"
@@ -24,10 +28,15 @@ const Ticket = () => {
     const [isConfirmModalOpened, setIsConfirmModalOpened] = useState(false)
     const [selectedTicket, setSelectedTicket] = useState<TicketInterface>()
     const [isEditModalOpened, setIsEditModalOpened] = useState(false)
+    const [isViewModalOpened, setIsViewModalOpened] = useState(false)
     const submit = useSubmit()
 
     const handleConfirModalClosed = () => {
         setIsConfirmModalOpened(false)
+    }
+
+    const handleViewModalClosed = () => {
+        setIsViewModalOpened(false)
     }
     useEffect(() => {
         if (actionData) {
@@ -93,35 +102,72 @@ const Ticket = () => {
                         <TableCell>{ticket.location}</TableCell>
                         <TableCell>{ticket.priority}</TableCell>
                         <TableCell>{ticket.description}</TableCell>
-                        <TableCell>{ticket.status.name}</TableCell>
+                        <TableCell>{ticket.status === "Pending" ? "No Staff Assigned" : ticket.stuff?.name}</TableCell>
                         <TableCell><Button color="success" variant="flat">{ticket.status}</Button></TableCell>
-                        <TableCell className="relative flex items-center gap-4">
-                            <span className=" text-primary-400 cursor-pointer active:opacity-50">
-                                <button className="text-dander font-poppins " onClick={() => {
+                        <TableCell className=" flex items-center  gap-4">
+                            <button className="text-dander font-poppins text-primary-400 cursor-pointer active:opacity-50 " onClick={() => {
+                                ticket.status==="Pending"? (
+                                <>
+                                
+                                </>
+                            ):(
+                            <>
+                            {setIsViewModalOpened(true)}
+                            {setSelectedTicket(ticket)}
+                            </>
+                            )
 
-
-                                }}>
-                                    View
-                                </button>
-                            </span>
+                            }}>
+                                View
+                            </button>
                             <button className="text-dander font-poppins  text-default-500" onClick={() => {
                                 setIsEditModalOpened(true)
                                 setSelectedTicket(ticket)
                             }}>
                                 Edit
                             </button>
-                            <span className=" text-danger cursor-pointer active:opacity-50">
-                                <button className="text-dander font-poppins " onClick={() => {
-                                    setIsConfirmModalOpened(true);
-                                    setSelectedTicket(ticket)
-                                }}>
-                                    Delete
-                                </button>
-                            </span>
+                            <button className="text-dander font-poppins text-danger cursor-pointer active:opacity-50" onClick={() => {
+                                setIsConfirmModalOpened(true);
+                                setSelectedTicket(ticket)
+                            }}>
+                                Delete
+                            </button>
+                            <button className="text-success-400 font-poppins text-danger cursor-pointer active:opacity-50" onClick={() => {
+                                submit({
+                                    id: ticket._id,
+                                    intent: 'toggleStatus',
+                                    status: ticket.status == 'Opened' ? 'Closed' : 'Opened'
+                                }, {
+                                    method: 'post',
+                                })
+                            }}>
+                                Complete
+                            </button>
                         </TableCell>
                     </TableRow>
                 ))}
             </CustomTable>
+            <ViewModal isOpen={isViewModalOpened} className="w-80" modalTitle="Ticket Creater Details" onOpenChange={handleViewModalClosed}>
+                <div>
+                    <img className="rounded-lg" src={selectedTicket?.stuff?.image} alt="" />
+                    <div className="mt-4 flex items-center gap-4">
+                        <UserIcon className="h-6 w-6"/>
+                        <p className="font-poppins text-sm">{selectedTicket?.stuff.name}</p>
+                    </div>
+                    <div className="mt-2 flex items-center gap-4">
+                        <MailIcon className="h-6 w-6 text-default-400"/>
+                        <p className="font-poppins text-sm">{selectedTicket?.stuff.email}</p>
+                    </div>
+                    
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4 font-poppins">
+                    <Button color="danger" variant="flat" onPress={handleViewModalClosed}>
+                        Close
+                    </Button>
+                </div>
+
+            </ViewModal>
 
             <CreateModal modalTitle="Create Tickets" className="" isOpen={isCreateModalOpened} onOpenChange={handleCloseCreateModal}>
                 {(onClose) => (
