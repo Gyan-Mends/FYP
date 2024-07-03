@@ -166,8 +166,8 @@ const Ticket = () => {
 
                         <input className="w-80" type="hidden" name="admin" value={admin._id} /><br />
                         <input className="w-80" type="hidden" name="id" value={selectedTicket?._id} />
-                        <input type="hidden" name="intent" value="assign" />
-                        <input type="hidden" name="status" value="Assigned" />
+                        <input type="hidden" name="intent" value="ticketassignment" />
+                        <input type="hidden" name="status" value={selectedTicket?.status} />
 
                         <div className="flex justify-end gap-2 mt-4 font-poppins">
                             <Button color="danger" onPress={onClose}>
@@ -197,7 +197,7 @@ export const action: ActionFunction = async ({ request }) => {
     const status = formData.get("status") as string
 
     switch (intent) {
-        case 'assign':
+        case 'ticketassignment':
             const assigned = await ticketController.AssignTicket({ stuff, admin, intent, id, status })
             return assigned
 

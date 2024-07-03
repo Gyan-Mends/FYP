@@ -20,7 +20,7 @@ import { TicketInterface } from "~/interfaces/interface"
 import UserLayout from "~/layout/userLayout"
 
 const Ticket = () => {
-    const { user, tickets } = useLoaderData<{ user: { _id: string }, tickets: TicketInterface[] }>();
+    const { user, userTicket } = useLoaderData<{ user: { _id: string }, userTicket: TicketInterface[] }>();
     const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
     const [base64Image, setBase64Image] = useState();
     const actionData = useActionData<any>()
@@ -31,6 +31,8 @@ const Ticket = () => {
     const [isViewModalOpened, setIsViewModalOpened] = useState(false)
     const [isCompleteConfirmOpened, setIsCompleteConfirmOpened] = useState(false)
     const submit = useSubmit()
+    console.log(selectedTicket);
+    
 
     const handleConfirModalClosed = () => {
         setIsConfirmModalOpened(false)
@@ -93,7 +95,7 @@ const Ticket = () => {
             </div>
 
             <CustomTable columns={TicketColumns} rowsPerPage={rowsPerPage} onRowsPerPageChange={handleRowsPerPageChange}>
-                {tickets.map((ticket: TicketInterface, index: number) => (
+                {userTicket.map((ticket: TicketInterface, index: number) => (
                     <TableRow className="text- " key={index}>
                         <TableCell>
                             <User
@@ -107,13 +109,13 @@ const Ticket = () => {
                         <TableCell>{ticket.location}</TableCell>
                         <TableCell>{ticket.priority}</TableCell>
                         <TableCell>{ticket.description}</TableCell>
-                        <TableCell>{ticket?.stuff?.name}</TableCell>
-                        <TableCell><Button className={`${ticket.status === "Pending"? "bg-danger bg-opacity-30 text-danger" : "bg-success bg-opacity-30 text-success"}`}  variant="flat">{ticket.status}</Button></TableCell>
+                        <TableCell>{ticket.status === "Pending" ? "No Staff Assigned" : ticket?.stuff?.name}</TableCell>
+                        <TableCell><Button className={`${ticket.status === "Pending" ? "bg-danger bg-opacity-30 text-danger" : "bg-success bg-opacity-30 text-success"}`} variant="flat">{ticket.status}</Button></TableCell>
                         <TableCell className=" flex items-center  gap-4">
-                            <button className={`text-dander font-poppins text-primary-400 cursor-pointer active:opacity-50 `}onClick={() => {
-                                
-                                        {setIsViewModalOpened(true)}
-                                        {setSelectedTicket(ticket)}
+                            <button className={`text-dander font-poppins text-primary-400 cursor-pointer active:opacity-50 `} onClick={() => {
+
+                                { setIsViewModalOpened(true) }
+                                { setSelectedTicket(ticket) }
 
                             }}>
                                 View
@@ -143,14 +145,14 @@ const Ticket = () => {
 
             <ViewModal isOpen={isViewModalOpened} className="w-80" modalTitle="Support Staff Details" onOpenChange={handleViewModalClosed}>
                 <div>
-                    <img className="rounded-lg" src={selectedTicket?.stuff?.image} alt="" />
+                    <img className="rounded-lg" src={selectedTicket?.stuff?.name} alt="" />
                     <div className="mt-4 flex items-center gap-4">
                         <UserIcon className="h-6 w-6" />
-                        <p className="font-poppins text-sm">{selectedTicket?.stuff.name}</p>
+                        <p className="font-poppins text-sm">{selectedTicket?.stuff?.name}</p>
                     </div>
                     <div className="mt-2 flex items-center gap-4">
                         <MailIcon className="h-6 w-6 text-default-400" />
-                        <p className="font-poppins text-sm">{selectedTicket?.stuff.email}</p>
+                        <p className="font-poppins text-sm">{selectedTicket?.stuff?.name}</p>
                     </div>
 
                 </div>
@@ -304,20 +306,26 @@ const Ticket = () => {
                     <Button color="danger" className="font-poppins text-md" onPress={handleOpenedCompleteConfirModalClosed}>
                         No
                     </Button>
-                    <Button color="primary" className="font-poppins text-md" onClick={() => {
-                        if (selectedTicket) {
-                            submit({
-                                id: selectedTicket._id,
-                                intent: 'completed',
-                                status: 'Completed'
-                            }, {
-                                method: 'post',
-                            })
-                        }
-                        setIsConfirmModalOpened(false)
-                    }} >
+                    <Button
+                        color="primary"
+                        className="font-poppins text-md"
+                        onClick={() => {
+                            if (selectedTicket) {
+                                submit({
+                                    id: selectedTicket._id,
+                                    intent: 'completed',
+                                    status: selectedTicket.status 
+                                }, {
+                                    method: 'post',
+                                });
+                            }
+                            setIsConfirmModalOpened(false);
+                        }}
+                    >
                         Yes
                     </Button>
+
+
                 </div>
             </ConfirmModal>
 
@@ -368,7 +376,7 @@ const Ticket = () => {
                         </div>
 
                         <div className="pt-4">
-                        <Input
+                            <Input
                                 className="text-sm font-poppins"
                                 label="priority"
                                 labelPlacement="outside"
@@ -428,6 +436,7 @@ const Ticket = () => {
                             </Button>
                             <button onClick={() => {
                                 setIsCreateModalOpened(false)
+                                
                             }} className="bg-primary-400 rounded-xl font-poppins px-4" >
                                 Submit
                             </button>
@@ -469,7 +478,7 @@ export const action: ActionFunction = async ({ request }) => {
             return deleteTicket;
 
         case 'completed':
-            const completeTicket = await ticketController.CompleteTicket({ intent, id,status })
+            const completeTicket = await ticketController.CompleteTicket({ intent, id, status })
             return completeTicket;
 
         default:
@@ -486,7 +495,7 @@ export const action: ActionFunction = async ({ request }) => {
 }
 
 export const loader: LoaderFunction = async (request) => {
-    const { user, tickets } = await ticketController.GetTickets(request);
+    const { user, userTicket } = await ticketController.GetTickets(request);
 
-    return { user, tickets }
+    return { user, userTicket }
 }

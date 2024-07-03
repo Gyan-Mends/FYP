@@ -76,33 +76,33 @@ class TicketController {
 
     async CompleteTicket({ intent, id, status }: { intent: String, id: string, status: string }) {
 
-        if (intent === "completed") {
-            if(status == 'Completed'){
-                return json({ message: "Ticket has been completed already", success: false }, { status: 200 })
-            }else{
-                const updateResponse = await Ticket.findByIdAndUpdate(id, {
-                    status
-                })
-
-                if (updateResponse) {
-                    return json({ message: "Ticket completed successfully", success: true }, { status: 200 })
-                } else {
-                    return json({ message: "Unable to complete ticket", success: false }, { status: 400 })
-                }
+        if (status === "Pending" ) {
+            return json({ message: "Can't complete this ticket, it is still unattended", success: false }, { status: 400 });
+        } else if (status === "Completed") {
+            return json({ message: "Ticket has already been completed", success: false }, { status: 400 });
+        } else {
+            const updateResponse = await Ticket.findByIdAndUpdate(id, {
+                status: "Completed"
+            });
+        
+            if (updateResponse) {
+                return json({ message: "Ticket completed successfully", success: true }, { status: 200 });
+            } else {
+                return json({ message: "Unable to complete ticket", success: false }, { status: 400 });
             }
         }
     }
 
     async AssignTicket({ stuff, admin, intent, id, status }: { stuff: string, admin: string; intent: String, id: string, status: string }) {
 
-        if (intent === "assign") {
-            if(status == 'Completed'){
+        if (intent === "ticketassignment") {
+            if (status === 'Completed') {
                 return json({ message: "Ticket has been Completed, can't assign staff", success: false }, { status: 400 })
             } else {
                 const assigned = await Ticket.findByIdAndUpdate(id, {
                     stuff,
                     admin,
-                    status
+                    status: "Assigned"
                 })
 
                 if (assigned) {
@@ -129,7 +129,7 @@ class TicketController {
             return redirect("/login")
         }
         //user side tickets fetch
-        const tickets = await Ticket.find({ user: user?._id }).populate("stuff")
+        const userTicket = await Ticket.find({ user: user?._id }).populate("stuff")
         //admin side ticket fetch
         const adminTickets = await Ticket.find().populate("stuff").populate("user");
         //staff side ticket fetch
@@ -137,7 +137,8 @@ class TicketController {
 
 
 
-        return { user, admin, staff, tickets, adminTickets, staffTickets }
+
+        return { user, admin, staff, userTicket, adminTickets, staffTickets }
     }
 }
 
