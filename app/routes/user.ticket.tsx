@@ -29,6 +29,7 @@ const Ticket = () => {
     const [selectedTicket, setSelectedTicket] = useState<TicketInterface>()
     const [isEditModalOpened, setIsEditModalOpened] = useState(false)
     const [isViewModalOpened, setIsViewModalOpened] = useState(false)
+    const [isCompleteConfirmOpened, setIsCompleteConfirmOpened] = useState(false)
     const submit = useSubmit()
 
     const handleConfirModalClosed = () => {
@@ -65,6 +66,9 @@ const Ticket = () => {
 
     const handleEditModalClosed = () => {
         setIsEditModalOpened(false)
+    }
+    const handleOpenedCompleteConfirModalClosed = () => {
+        setIsCompleteConfirmOpened(false)
     }
     return (
         <UserLayout pageName="Tickets">
@@ -103,20 +107,13 @@ const Ticket = () => {
                         <TableCell>{ticket.location}</TableCell>
                         <TableCell>{ticket.priority}</TableCell>
                         <TableCell>{ticket.description}</TableCell>
-                        <TableCell>{ticket.status === "Pending" ? "No Staff Assigned" : ticket?.stuff?.name}</TableCell>
-                        <TableCell><Button color="success" variant="flat">{ticket.status}</Button></TableCell>
+                        <TableCell>{ticket?.stuff?.name}</TableCell>
+                        <TableCell><Button className={`${ticket.status === "Pending"? "bg-danger bg-opacity-30 text-danger" : "bg-success bg-opacity-30 text-success"}`}  variant="flat">{ticket.status}</Button></TableCell>
                         <TableCell className=" flex items-center  gap-4">
-                            <button className="text-dander font-poppins text-primary-400 cursor-pointer active:opacity-50 " onClick={() => {
-                                ticket.status==="Pending"? (
-                                <>
+                            <button className={`text-dander font-poppins text-primary-400 cursor-pointer active:opacity-50 `}onClick={() => {
                                 
-                                </>
-                            ):(
-                            <>
-                            {setIsViewModalOpened(true)}
-                            {setSelectedTicket(ticket)}
-                            </>
-                            )
+                                        {setIsViewModalOpened(true)}
+                                        {setSelectedTicket(ticket)}
 
                             }}>
                                 View
@@ -134,7 +131,7 @@ const Ticket = () => {
                                 Delete
                             </button>
                             <button className="text-success-400 font-poppins text-danger cursor-pointer active:opacity-50" onClick={() => {
-                                setIsConfirmModalOpened(true)
+                                setIsCompleteConfirmOpened(true)
                                 setSelectedTicket(ticket)
                             }}>
                                 Complete
@@ -143,19 +140,19 @@ const Ticket = () => {
                     </TableRow>
                 ))}
             </CustomTable>
-            
-            <ViewModal isOpen={isViewModalOpened} className="w-80" modalTitle="Ticket Creater Details" onOpenChange={handleViewModalClosed}>
+
+            <ViewModal isOpen={isViewModalOpened} className="w-80" modalTitle="Support Staff Details" onOpenChange={handleViewModalClosed}>
                 <div>
                     <img className="rounded-lg" src={selectedTicket?.stuff?.image} alt="" />
                     <div className="mt-4 flex items-center gap-4">
-                        <UserIcon className="h-6 w-6"/>
+                        <UserIcon className="h-6 w-6" />
                         <p className="font-poppins text-sm">{selectedTicket?.stuff.name}</p>
                     </div>
                     <div className="mt-2 flex items-center gap-4">
-                        <MailIcon className="h-6 w-6 text-default-400"/>
+                        <MailIcon className="h-6 w-6 text-default-400" />
                         <p className="font-poppins text-sm">{selectedTicket?.stuff.email}</p>
                     </div>
-                    
+
                 </div>
 
                 <div className="flex justify-end gap-2 mt-4 font-poppins">
@@ -222,7 +219,7 @@ const Ticket = () => {
 
                             >
                                 {priorities.map((priority) => (
-                                    <SelectItem textValue={priority?.name} className="mt-4" key={priority.name}>
+                                    <SelectItem textValue={priority?.name} className="mt-4" key={priority?.name}>
                                         {priority?.name}
                                     </SelectItem>
                                 ))}
@@ -265,6 +262,7 @@ const Ticket = () => {
 
                         <input type="hidden" name="user" value={user._id} />
                         <input type="hidden" name="base64Image" value={base64Image} />
+                        <input type="hidden" name="intent" value="create" />
 
                         <div className="flex justify-end gap-2 mt-10 font-poppins">
                             <Button color="danger" onPress={onClose}>
@@ -280,7 +278,7 @@ const Ticket = () => {
                 )}
             </CreateModal>
 
-            <ConfirmModal modalbody="Are you sure to complete this ticket?" isOpen={isConfirmModalOpened} onOpenChange={handleConfirModalClosed}>
+            <ConfirmModal modalbody="Are you sure to delete this ticket?" isOpen={isConfirmModalOpened} onOpenChange={handleConfirModalClosed}>
                 <div className="flex gap-4">
                     <Button color="danger" className="font-poppins text-md" onPress={handleConfirModalClosed}>
                         No
@@ -289,8 +287,29 @@ const Ticket = () => {
                         if (selectedTicket) {
                             submit({
                                 id: selectedTicket._id,
-                                intent: 'complete',
-                                status:  'Completed' 
+                                intent: 'delete',
+                            }, {
+                                method: 'post',
+                            })
+                        }
+                        setIsConfirmModalOpened(false)
+                    }} >
+                        Yes
+                    </Button>
+                </div>
+            </ConfirmModal>
+
+            <ConfirmModal modalbody="Are you sure to complete this ticket?" isOpen={isCompleteConfirmOpened} onOpenChange={handleOpenedCompleteConfirModalClosed}>
+                <div className="flex gap-4">
+                    <Button color="danger" className="font-poppins text-md" onPress={handleOpenedCompleteConfirModalClosed}>
+                        No
+                    </Button>
+                    <Button color="primary" className="font-poppins text-md" onClick={() => {
+                        if (selectedTicket) {
+                            submit({
+                                id: selectedTicket._id,
+                                intent: 'completed',
+                                status: 'Completed'
                             }, {
                                 method: 'post',
                             })
@@ -349,22 +368,19 @@ const Ticket = () => {
                         </div>
 
                         <div className="pt-4">
-                            <Select
-                                label="Priority"
+                        <Input
+                                className="text-sm font-poppins"
+                                label="priority"
                                 labelPlacement="outside"
                                 placeholder=" "
-                                isRequired
-                                className="mt-4"
                                 name="priority"
+                                defaultValue={selectedTicket?.priority}
+                                isRequired
+                                classNames={{
+                                    inputWrapper: "mt-4",
+                                }}
 
-                            >
-                                {priorities.map((priority) => (
-                                    <SelectItem textValue={priority?.name} className="mt-4" key={priority.name}>
-                                        {priority?.name}
-                                    </SelectItem>
-                                ))}
-
-                            </Select>
+                            />
                         </div>
 
                         <Textarea
@@ -401,7 +417,7 @@ const Ticket = () => {
                             />
                         </div>
 
-                        <input type="hidden" name="user" value={user._id} />
+                        <input type="hidden" name="user" value={user?._id} />
                         <input type="hidden" name="base64Image" value={base64Image} />
                         <input type="hidden" name="id" value={selectedTicket?._id} />
                         <input type="hidden" name="intent" value="update" />
@@ -439,9 +455,33 @@ export const action: ActionFunction = async ({ request }) => {
     const status = formData.get('status') as string;
 
 
+    switch (intent) {
+        case "update":
+            // Editing tickets
+            const editTickets = ticketController.EditTickets({ request, subject, category, priority, description, attachment, user, location, intent, id })
+            return editTickets;
+        case 'create':
+            // creating new ticket
+            const createTickets = ticketController.CreateTickets({ request, subject, category, priority, description, attachment, user, location, intent })
+            return createTickets;
+        case 'delete':
+            const deleteTicket = await ticketController.DeleteTicket({ intent, id })
+            return deleteTicket;
 
-    const tickets =  ticketController.CreaateTickets({ request, subject, category, priority, description, attachment, user, location })
-    return {tickets}
+        case 'completed':
+            const completeTicket = await ticketController.CompleteTicket({ intent, id,status })
+            return completeTicket;
+
+        default:
+            return {
+                message: 'bad request',
+                status: 'error',
+                success: false
+            };
+
+    }
+
+
 
 }
 

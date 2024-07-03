@@ -6,44 +6,80 @@ import StaffRegistration from "~/modal/staffRegistration";
 import Ticket from "~/modal/tickets";
 import { getSession } from "~/session";
 class TicketController {
+    // creating new ticket
+    async CreateTickets({ request, subject, category, priority, description, attachment, user, location, intent }: { request: Request, subject: string, category: string, priority: string, description: string, attachment: string, user: string, location: string, intent: string }) {
+        if (intent === "create") {
+            try {
+                const session = await getSession(request.headers.get("Cookie"));
+                const token = session.get("email");
 
-    async CreateTickets({ request, subject, category, priority, description, attachment, user, location }: { request: Request, subject: string, category: string, priority: string, description: string, attachment: string, user: string, location: string }) {
+                const tickets = new Ticket({
+                    subject,
+                    category,
+                    priority,
+                    description,
+                    attachment,
+                    user,
+                    location,
+                });
+
+                const ticketResponse = await tickets.save();
+
+                if (ticketResponse) {
+                    return json({ message: "Ticket Created Successfully", success: true }, { status: 200 });
+                } else {
+                    return json({ message: "Unable to create ticket", success: false }, { status: 400 });
+                }
+            } catch (error: any) {
+                console.error("Error creating ticket:", error);
+                return json({ message: error.message, success: false }, { status: 500 });
+            }
+        }
+    }
+
+    //editing tickets
+    async EditTickets({ request, subject, category, priority, description, user, location, intent, id }: { request: Request, subject: string, category: string, priority: string, description: string, attachment: string, user: string, location: string, intent: string, id: string }) {
         try {
-            const session = await getSession(request.headers.get("Cookie"));
-            const token = session.get("email");
-    
-            const tickets = new Ticket({
-                subject,
-                category,
-                priority,
-                description,
-                attachment,
-                user,
-                location,
-            });
-    
-            const ticketResponse = await tickets.save();
-    
-            if (ticketResponse) {
-                return json({ message: "Ticket Created Successfully", success: true }, { status: 200 });
-            } else {
-                return json({ message: "Unable to create ticket", success: false }, { status: 400 });
+            if (intent === "update") {
+                const updateResponse = await Ticket.findByIdAndUpdate(id, {
+                    subject,
+                    category,
+                    priority,
+                    description,
+                    location,
+                    user,
+                })
+
+                if (updateResponse) {
+                    return json({ message: "Ticket updated successfull", success: true }, { status: 200 })
+                } else {
+                    return json({ message: "Unable to update ticket", success: false }, { status: 400 })
+                }
             }
         } catch (error: any) {
             console.error("Error creating ticket:", error);
             return json({ message: error.message, success: false }, { status: 500 });
         }
     }
-    
 
-    async AddTickets({ request, subject, category, priority, description, attachment, user, location, id, intent,admin,stuff,status }: { request: Request, subject: string, category: string, priority: string, description: string, attachment: string, user: string, location: string, id: string, intent: string,admin:string,stuff:string,status:string }) {
-        try {
-            const session = await getSession(request.headers.get("Cookie"));
-            const token = session.get("email");
+    async DeleteTicket({ intent, id }: { intent: String, id: string }) {
 
-            if (intent === "complete") {
-                console.log(id);
-                
+        if (intent === "delete") {
+            const deleteResponse = await Ticket.findByIdAndDelete(id)
+            if (deleteResponse) {
+                return json({ message: "Ticket deleted successfull", success: true }, { status: 200 })
+            } else {
+                return json({ message: "Unable to delete ticket", success: false }, { status: 400 })
+            }
+        }
+    }
+
+    async CompleteTicket({ intent, id, status }: { intent: String, id: string, status: string }) {
+
+        if (intent === "completed") {
+            if(status == 'Completed'){
+                return json({ message: "Ticket has been completed already", success: false }, { status: 200 })
+            }else{
                 const updateResponse = await Ticket.findByIdAndUpdate(id, {
                     status
                 })
@@ -54,68 +90,40 @@ class TicketController {
                     return json({ message: "Unable to complete ticket", success: false }, { status: 400 })
                 }
             }
-
-            if (intent === "update") {
-                const updateResponse = await Ticket.findByIdAndUpdate(id, {
-                    subject,
-                    category,
-                    priority,
-                    description,
-                    location,
-                    status,
-                    user,
-                    admin,
-                    stuff,
-                })
-
-                if (updateResponse) {
-                    return json({ message: "Ticket updated successfull", success: true }, { status: 200 })
-                } else {
-                    return json({ message: "Unable to update ticket", success: false }, { status: 400 })
-                }
-            }
-
-            if (intent === "delete") {
-                const deleteResponse = await Ticket.findByIdAndDelete(id)
-                if (deleteResponse) {
-                    return json({ message: "Ticket deleted successfull", success: true }, { status: 200 })
-                } else {
-                    return json({ message: "Unable to delete ticket", success: false }, { status: 400 })
-                }
-            }
-
-            const tickets = new Ticket({
-                subject,
-                category,
-                priority,
-                description,
-                attachment: attachment,
-                user,
-                location,
-            })
-
-            const ticketResponse = await tickets.save()
-
-            if (ticketResponse) {
-                return json({ message: "Ticket Created Succeefully", success: true }, { status: 200 });
-            } else {
-                return json({ message: "Unable to create ticket", success: false }, { status: 400 });
-            }
-        } catch (error: any) {
-            return json({ message: error.message, success: false }, { status: 500 });
-
         }
     }
+
+    async AssignTicket({ stuff, admin, intent, id, status }: { stuff: string, admin: string; intent: String, id: string, status: string }) {
+
+        if (intent === "assign") {
+            if(status == 'Completed'){
+                return json({ message: "Ticket has been Completed, can't assign staff", success: false }, { status: 400 })
+            } else {
+                const assigned = await Ticket.findByIdAndUpdate(id, {
+                    stuff,
+                    admin,
+                    status
+                })
+
+                if (assigned) {
+                    return json({ message: "Support Staff assigned successfully", success: true }, { status: 400 })
+                } else {
+                    return json({ message: "Unable to assign Support Staff", success: true }, { status: 400 })
+                }
+            }
+        }
+    }
+
 
     async GetTickets({ request }: { request: Request }) {
         const session = await getSession(request.headers.get("Cookie"));
         const token = session.get("email");
         const user = await Registration.findOne({ email: token });
-        const admin = await AdminRegistration.findOne({email:token});
-        const staffId = await StaffRegistration.findOne({email:token});
+        const admin = await AdminRegistration.findOne({ email: token });
+        const staffId = await StaffRegistration.findOne({ email: token });
         const staff = await StaffRegistration.find();
-        
-        
+
+
 
         if (!token) {
             return redirect("/login")
@@ -125,11 +133,11 @@ class TicketController {
         //admin side ticket fetch
         const adminTickets = await Ticket.find().populate("stuff").populate("user");
         //staff side ticket fetch
-        const staffTickets =  await Ticket.find({stuff:staffId?._id}).populate("user").populate("stuff");
-        
-        
+        const staffTickets = await Ticket.find({ stuff: staffId?._id }).populate("user").populate("stuff");
 
-        return { user,admin,staff,tickets,adminTickets,staffTickets }
+
+
+        return { user, admin, staff, tickets, adminTickets, staffTickets }
     }
 }
 

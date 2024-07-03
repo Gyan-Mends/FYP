@@ -1,5 +1,5 @@
 import { Button, Input, Select, SelectItem, TableCell, TableRow, Textarea, User } from "@nextui-org/react"
-import { ActionFunction, LoaderFunction } from "@remix-run/node"
+import { ActionFunction, LoaderFunction, json } from "@remix-run/node"
 import { Form, Link, useActionData, useLoaderData, useSubmit } from "@remix-run/react"
 import { useEffect, useState } from "react"
 import { Toaster } from "react-hot-toast"
@@ -25,7 +25,7 @@ const Ticket = () => {
     const [isConfirmModalOpened, setIsConfirmModalOpened] = useState(false)
     const [selectedTicket, setSelectedTicket] = useState<TicketInterface>()
     const [isEditModalOpened, setIsEditModalOpened] = useState(false)
-    const [isViewModalOpened,setIsViewModalOpened] = useState(false)
+    const [isViewModalOpened, setIsViewModalOpened] = useState(false)
     const submit = useSubmit()
 
     const handleConfirModalClosed = () => {
@@ -120,29 +120,6 @@ const Ticket = () => {
                 ))}
             </CustomTable>
 
-
-
-            <ConfirmModal modalbody="Are you sure to delete this information" isOpen={isConfirmModalOpened} onOpenChange={handleConfirModalClosed}>
-                <div className="flex gap-4">
-                    <Button color="danger" className="font-poppins text-md" onPress={handleConfirModalClosed}>
-                        No
-                    </Button>
-                    <Button color="primary" className="font-poppins text-md" onClick={() => {
-                        if (selectedTicket) {
-                            submit({
-                                intent: "delete",
-                                id: selectedTicket?._id
-
-                            }, {
-                                method: "post"
-                            })
-                        }
-                        setIsConfirmModalOpened(false)
-                    }} >
-                        Yes
-                    </Button>
-                </div>
-            </ConfirmModal>
             <ViewModal isOpen={isViewModalOpened} className="w-80" modalTitle="Ticket Creater Details" onOpenChange={handleViewModalClosed}>
                 <div>
                     <img className="rounded-lg" src={selectedTicket?.user.image} alt="" />
@@ -186,117 +163,13 @@ const Ticket = () => {
                             ))}
 
                         </Select>
-                        <Input
-                            label="Subject"
-                            className="text-sm font-poppins"
-                            labelPlacement="outside"
-                            placeholder=" "
-                            defaultValue={selectedTicket?.subject}
-                            name="subject"
-                            isRequired
-                            isReadOnly
-                            classNames={{
-                                inputWrapper: "mt-4",
-                            }}
-                        />
-                        <div className="flex gap-4">
-                            <Input
-                                className="text-sm font-poppins"
-                                label="Category"
-                                labelPlacement="outside"
-                                placeholder=" "
-                                isReadOnly
-                                name="support"
-                                isRequired
-                                defaultValue="IT Support"
-                                classNames={{
-                                    inputWrapper: "mt-4",
-                                }}
-
-                            />
-                            <Input
-                                className="text-sm font-poppins"
-                                label="Location"
-                                labelPlacement="outside"
-                                placeholder=" "
-                                name="location"
-                                defaultValue={selectedTicket?.location}
-                                isRequired
-                                isReadOnly
-                                classNames={{
-                                    inputWrapper: "mt-4",
-                                }}
-
-                            />
-                        </div>
-
-                        <div className="flex gap-4 pt-4">
-                            <Input
-                                className="text-sm font-poppins"
-                                label="Status"
-                                labelPlacement="outside"
-                                placeholder=" "
-                                name="status"
-                                defaultValue="Assigned"
-                                isRequired
-                                isReadOnly
-                                classNames={{
-                                    inputWrapper: "mt-4",
-                                }}
-
-                            />
-                            <Input
-                                className="text-sm font-poppins"
-                                label="Priority"
-                                labelPlacement="outside"
-                                placeholder=" "
-                                name="priority"
-                                defaultValue={selectedTicket?.priority}
-                                isRequired
-                                isReadOnly
-                                classNames={{
-                                    inputWrapper: "mt-4",
-                                }}
-
-                            />
-                        </div>
-
-                        <Textarea
-                            className="text-sm font-poppins"
-                            label="Description(Optinal)"
-                            labelPlacement="outside"
-                            placeholder=" "
-                            isReadOnly
-                            defaultValue={selectedTicket?.description}
-                            name="description"
-                            classNames={{
-                                inputWrapper: "",
-                                label: "mt-4"
-                            }}
-                        />
-
-                        <div className="pt-2 ">
-                            <Input
-                                className="text-sm font-poppins"
-                                label="Attachment"
-                                labelPlacement="outside"
-                                placeholder=" "
-                                name="attachment"
-                                defaultValue={selectedTicket?.attachment}
-                                isRequired
-                                isReadOnly
-                                classNames={{
-                                    inputWrapper: "mt-4",
-                                }}
-                            />
-                        </div>
 
                         <input className="w-80" type="hidden" name="admin" value={admin._id} /><br />
-                        <input className="w-80" type="hidden" name="user" value={selectedTicket?.user} /><br />
                         <input className="w-80" type="hidden" name="id" value={selectedTicket?._id} />
-                        <input type="hidden" name="intent" value="update" />
+                        <input type="hidden" name="intent" value="assign" />
+                        <input type="hidden" name="status" value="Assigned" />
 
-                        <div className="flex justify-end gap-2 mt-10 font-poppins">
+                        <div className="flex justify-end gap-2 mt-4 font-poppins">
                             <Button color="danger" onPress={onClose}>
                                 Close
                             </Button>
@@ -317,22 +190,23 @@ export default Ticket
 
 export const action: ActionFunction = async ({ request }) => {
     const formData = await request.formData();
-    const subject = formData.get("subject") as string;
-    const category = formData.get("support") as string;
-    const priority = formData.get("priority") as string;
-    const description = formData.get("description") as string;
-    const attachment = formData.get("base64Image") as string;
-    const user = formData.get("user") as string
     const admin = formData.get("admin") as string
-    const location = formData.get("location") as string
     const id = formData.get("id") as string
     const stuff = formData.get("supportstaff") as string
     const intent = formData.get("intent") as string
     const status = formData.get("status") as string
 
-    const tickets = await ticketController.AddTickets({ request, subject, category, priority, description, attachment, user, location, id, intent, admin, stuff, status })
-    return tickets
+    switch (intent) {
+        case 'assign':
+            const assigned = await ticketController.AssignTicket({ stuff, admin, intent, id, status })
+            return assigned
 
+        default:
+            return json({
+                message:"Bad request",
+                success:true
+            })
+    }
 }
 
 export const loader: LoaderFunction = async (request) => {
